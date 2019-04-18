@@ -1,6 +1,7 @@
 from xml.etree import cElementTree as elemtree
 from datetime import date
 import sys, re
+import pickle
 
 from anytree import Node, RenderTree
 
@@ -145,7 +146,37 @@ onto=parse_mesh(sys.argv[1])
 
 nodes={} #maps node names into labels
 reverse_nodes={} #maps labels into nodes
-roots=[]
+#roots=[]
+
+"""
+ [A] Anatomie
+ [B] Organismes
+ [C] Maladies
+ [D] Produits chimiques et pharmaceutiques
+ [E] Techniques et équipements analytiques, diagnostiques et thérapeutiques
+ [F] Psychiatrie et psychologie
+ [G] Phénomènes et processus
+ [H] Disciplines et professions
+ [I] Anthropologie, enseignement, sociologie et phénoménes sociaux
+ [J] Technologie, industrie et agriculture
+ [K] Sciences humaines
+ [L] Sciences de l'information
+ [M] Individus
+ [N] Santé
+ [V] Caractéristiques d'une publication
+ [Z] Lieux géographiques
+"""
+
+meshroot=Node("MeSH")
+firstlevel={"A":Node("Anatomie"), "B":Node("Organismes"), "C":Node("Maladies"),
+    "D":Node("Produits chimiques et pharmaceutiques"), "E":Node("Techniques et équipements analytiques, diagnostiques et thérapeutiques"),
+    "F":Node("Psychiatrie et psychologie"), "G":Node("Phénomènes et processus"), "H":Node("Disciplines et professions"),
+    "I":Node("Anthropologie, enseignement, sociologie et phénoménes sociaux"), "J":Node("Technologie, industrie et agriculture"),
+    "K":Node("Sciences humaines"), "L":Node("Sciences de l'information"), "M":Node("Individus"), "N":Node("Santé"),
+    "V":Node("Caractéristiques d'une publication"), "Z":Node("Lieux géographiques")}
+
+for k,v in firstlevel.items():
+    v.parent=meshroot
 
 for c in onto:
     clean_name=re.sub("\[.+\]","",c.name)
@@ -163,9 +194,19 @@ for node in nodes.keys():
             pr=reverse_nodes[plabel]
             n.parent=pr
         except KeyError:
-            roots.append(n)
+            #roots.append(n)
+            n_parent=firstlevel[label[0]]
+            n.parent=n_parent
+            #print(label)
         #print(n, label, plabel)
-
+"""
 for r in roots:
     for pre, fill, node in RenderTree(r):
         print("%s%s" % (pre, node.name))
+"""
+
+for pre, fill, node in RenderTree(meshroot):
+    print("%s%s" % (pre, node.name))
+
+with open('mesh_anytree.pkl', 'wb') as output:
+    pickle.dump(meshroot, output, pickle.HIGHEST_PROTOCOL)
