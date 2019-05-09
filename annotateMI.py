@@ -102,30 +102,38 @@ LTM=m.getMatrix()
 
 print "reading files in directory", args.dir
 counter=0
+
+print "parsing data"
+#donner le repertoire base où se trouvent les fichiers texte et la ref donnees-t1-ref.csv
+counter=0
 root=args.dir
-refFile=os.path.join(root, "ref")
+refFile=os.path.join(root, "donnees-t1-ref.csv")
 ref=codecs.open(refFile, "r", "utf-8")
-for line in ref.xreadlines():
+for line in ref.readlines():
 	els=line.strip().split("\t")
-	id=els[0]
+	id1=els[0].replace(".txt", "")
+	id2=els[1].replace(".txt", "")
 	counter+=1
-	labels=els[1].split(";")
-	n = Notice(id, labels)
-	collection[id]=n
+	counter+=1
+	labels=els[3:]
+	n1 = Notice(id1, labels)
+	n2 = Notice(id2, labels)
+	collection[id1]=n1
+	collection[id2]=n2
 
 N=counter+1 #we use this as the size of the collection
 
-txtDir=os.path.join(root, "txt")
-for file in os.listdir(txtDir):
-	if file.endswith(".txt"):
-		id=file.replace(".txt", "")
-		ffname=os.path.join(txtDir, file)
-		tf=codecs.open(ffname, "r", "utf-8")
-		lines=tf.readlines()
-		tf.close()
+for file in os.listdir(root):
+    if file.endswith(".txt") and not file.startswith("._"):
+        if file.startswith("README") or file.startswith("filelist"): continue
+        id=file.replace(".txt", "")
+        ffname=os.path.join(root, file)
+        tf=codecs.open(ffname, "r", "latin-1")
+        lines=tf.readlines()
+        tf.close()
 
-		n=collection[id]
-		n.setText(' '.join(lines))
+        n=collection[id]
+        n.setText(' '.join(lines))
 
 print "annotating..."
 #print LTM.shape, len(lidx), len(widx)
@@ -138,24 +146,20 @@ for id in collection.keys():
 	found_labels=set([])
 	vec=np.zeros(len(widx)) # the vector associated to this document
 	notice=collection[id]
-	ttxt=notice.taggedtext
-	tokens=ttxt.split(' ')
+	tokens=list(tokenize(notice.text, deacc=True))
 	notice_indices=[] #not null vec indices
 	for t in tokens:
-		items=t.split('/')
-		termlist=[token.text for token in ana(u""+items[0])]
+		termlist=[token.text for token in ana(t)] #STEMMING
 		try:
 			word=termlist[0] #STEMMING
 		except IndexError:
 			continue
-		if re.match("[na].+", items[1]): #nav si on veut aussi les verbes
-			try:
-				index=widx[word] #STEMMING
-				vec[index]=1.0 #we use a boolean vector
-				notice_indices.append(index)
-				#vec[index]=vec[index]+1 #we weight the vector using the tf
-			except KeyError:
-				continue #move to next token, this one is not in the dictionary
+		try:
+		    index=widx[word]
+		    vec[index]=1.0
+		    notice_indices.append(index)
+		except KeyError:
+		    continue #move to next token, this one is not in the dictionary
 	"""
 	#applying idf to all elements of the vector
 	for i in xrange(len(vec)):
@@ -220,8 +224,8 @@ for k in collection.keys():
 	notice=collection[k]
 	labels=set(notice.labels)
 	alabels=notice.assignedlabels
-	#print labels
-	#print alabels
+	print "ref:", labels
+	print "assigned:", alabels
 	ll=len(labels)
 	all=len(alabels)
 	isect= labels & alabels
