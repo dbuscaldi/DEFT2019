@@ -128,7 +128,7 @@ for file in os.listdir(root):
         if file.startswith("README") or file.startswith("filelist"): continue
         id=file.replace(".txt", "")
         ffname=os.path.join(root, file)
-        tf=codecs.open(ffname, "r", "latin-1")
+        tf=codecs.open(ffname, "r", "utf-8")
         lines=tf.readlines()
         tf.close()
 

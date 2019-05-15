@@ -24,4 +24,4 @@ model.train(epochs=50)
 
 print("saving model...")
 with open('mesh_poincare.pkl', 'wb') as output:
-    pickle.dump(model, output, pickle.HIGHEST_PROTOCOL)
+    pickle.dump(model, output, protocol=2)

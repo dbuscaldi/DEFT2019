@@ -208,5 +208,5 @@ for r in roots:
 for pre, fill, node in RenderTree(meshroot):
     print("%s%s" % (pre, node.name))
 
-with open('mesh_anytree.pkl', 'wb') as output:
-    pickle.dump(meshroot, output, pickle.HIGHEST_PROTOCOL)
+with open('mesh_anytree2.pkl', 'wb') as output:
+    pickle.dump(meshroot, output, protocol=2)
